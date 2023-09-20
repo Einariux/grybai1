@@ -1,3 +1,4 @@
+import PySimpleGUI as sg
 from sqlalchemy import create_engine, Table, Column
 from sqlalchemy import Integer, String, ForeignKey
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
