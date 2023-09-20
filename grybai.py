@@ -37,14 +37,14 @@ class Regionai(Base):
 Base.metadata.create_all(db_engine)
 
 
-def main_window():
+def main_window(): # Einaras
     pass
 
-def add_region():
+def add_region(): # Deivida
     pass
 
-def add_location():
+def add_location(): # Lukas 
     pass
 
-def add_mushroom():
+def add_mushroom(): # Vytautas 
     pass
