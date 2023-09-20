@@ -5,6 +5,7 @@ from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 from sqlalchemy.exc import OperationalError
 
 
+
 try:
     db_engine = create_engine('sqlite:///grybai.db')
     Base = declarative_base()
@@ -26,7 +27,7 @@ class Vietoves(Base):
     __tablename__ = 'vietoves'
     id = Column(Integer, primary_key=True, autoincrement=True)
     vietoves_pavadinimas = Column(String(50))
-    regionai = relationship('Regionai', back_populates='vietove', foreign_keys='Regionai.vietove_reg')
+    regionai = relationship('Regionai', back_populates='vietove')
     grybai = relationship('Grybai', back_populates='vietoves')
 
 class Regionai(Base):
@@ -34,7 +35,7 @@ class Regionai(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     regionas = Column(String(50))
     vietove_reg = Column(Integer, ForeignKey('vietoves.id'))
-    vietove = relationship('Vietoves', back_populates='regionai', foreign_keys=[vietove_reg])
+    vietove = relationship('Vietoves', back_populates='regionai')
 
 Base.metadata.create_all(db_engine)
 
@@ -44,6 +45,7 @@ def main_window(): # Einaras
 
 def add_region(): # Deivida
     pass
+
 # Lukas
 def add_location(session): 
     #pasiimti regionus is db
@@ -93,6 +95,7 @@ def remove_location(session):
         event, values = window.read()
         if event == sg.WINDOW_CLOSED:
             break
+
 def add_mushroom(): # Vytautas 
     pass
 
