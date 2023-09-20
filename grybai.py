@@ -29,3 +29,4 @@ class Regionai(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     regionas = Column(String(50))
 
+Base.metadata.create_all(db_engine)
