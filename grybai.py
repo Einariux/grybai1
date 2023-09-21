@@ -44,7 +44,7 @@ def add_location(session):
     # pasiimti regionus is db
     regions = session.query(Regionai).all()
     # regionu dropDown
-    regionu_pavadinimai = [regionas.regionas for regionas in regions]
+    regionu_pavadinimai = [regionas.pavadinimas for regionas in regions]
 
     layout = [
         [
@@ -72,19 +72,19 @@ def add_location(session):
                 (
                     regionas
                     for regionas in regions
-                    if regionas.regionas == pasirinktas_regionas
+                    if regionas.pavadinimas == pasirinktas_regionas
                 ),
                 None,
             )
 
-        if vietoves_pavadinimas:
-            nauja_vietove = Vietoves(vietoves_pavadinimas=vietoves_pavadinimas)
+        if pasirinktas_regionas:
+            nauja_vietove = Vietoves(pavadinimas=vietoves_pavadinimas, regionai=pasirinktas_regionas)
             session.add(nauja_vietove)
             session.commit()
             sg.popup(f"Vietove: {vietoves_pavadinimas} Sekmingai prideta")
             break
         else:
-            sg.popup("Visi laukai turi buti uzpildyti")
+            sg.popup("Pasirinktas regionas nerastas")
 
 
 def remove_location(session):
@@ -138,6 +138,6 @@ def add_mushroom():  # Vytautas
 
 if __name__ == "__main__":
     session = Session()
-    add_region(session)
+    # add_region(session)
     add_location(session)
-    remove_location(session)
+    # remove_location(session)
