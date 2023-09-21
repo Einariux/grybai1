@@ -1,8 +1,7 @@
-from sqlalchemy import create_engine, Column
+from sqlalchemy import create_engine, Column, Table
 from sqlalchemy import Integer, String, ForeignKey
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 from sqlalchemy.exc import OperationalError
-
 
 try:
     db_engine = create_engine('sqlite:///grybai.db')
@@ -12,39 +11,46 @@ except OperationalError as e:
     print('Nepavyko prisijungti prie db')
     print(e)
 
-    
-class Grybai(Base):
-    __tablename__ = 'grybai'
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    pavadinimas = Column(String(30))
-    grybo_klase = Column(String(30))
-    vietove_id = Column(Integer, ForeignKey('vietoves.id'))
-    vietoves = relationship('Vietoves', back_populates='grybai')
 
-    def __repr__(self):
-        return f'{self.id}, {self.pavadinimas}, {self.grybo_klase}'
-    
+Base = declarative_base()
 
-class Vietoves(Base):
-    __tablename__ = 'vietoves'
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    vietoves_pavadinimas = Column(String(50))
-    regionai = relationship('Regionai', back_populates='vietove')
-    grybai = relationship('Grybai', back_populates='vietoves')
-
-    def __repr__(self):
-        return f'{self.vietoves_pavadinimas}'
-    
+table_vietoves_grybai = Table(
+    'vietoves_grybai',
+    Base.metadata,
+    Column('vietoves_id', Integer, ForeignKey('vietoves.id')),
+    Column('grybai_id', Integer, ForeignKey('grybai.id')),
+)
 
 class Regionai(Base):
     __tablename__ = 'regionai'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    regionas = Column(String(50))
-    vietove_reg = Column(Integer, ForeignKey('vietoves.id'))
-    vietove = relationship('Vietoves', back_populates='regionai')
+    pavadinimas = Column(String(50))
+    
+    def __repr__(self):
+        return f'{self.pavadinimas}'
+
+class Grybai(Base):
+    __tablename__ = 'grybai'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    pavadinimas = Column(String(50))
+    klase = Column(String(50))
+    vietove_id = Column(Integer, ForeignKey('vietoves.id'))
+    vietove = relationship('Vietoves', secondary=table_vietoves_grybai, back_populates='grybai') #many to many
+    
+    def __repr__(self):
+        return f'{self.id}, {self.pavadinimas}, {self.klase}'
+
+class Vietoves(Base):
+    __tablename__ = 'vietoves'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    pavadinimas = Column(String(50))
+    regionai_id = Column(Integer, ForeignKey('regionai.id'))
+    regionai = relationship('Regionai', back_populates='vietoves') #one to many
+    grybai_id = Column(Integer, ForeignKey('Grybai.id'))
+    grybai = relationship('Grybai', secondary=table_vietoves_grybai, back_populates='vietove') #many to many
 
     def __repr__(self):
-        return f'{self.regionas}'
-    
-    
+        return f'{self.pavadinimas}'
+
 Base.metadata.create_all(db_engine)
+
