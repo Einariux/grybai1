@@ -36,7 +36,7 @@ class Grybai(Base):
     pavadinimas = Column(String(50))
     klase = Column(String(50))
     vietove_id = Column(Integer, ForeignKey('vietoves.id'))
-    vietove = relationship('Vietoves', secondary=table_vietoves_grybai, back_populates='grybai') #many to many
+    vietove = relationship('Vietoves', secondary=table_vietoves_grybai, back_populates='grybai') 
     
     def __repr__(self):
         return f'{self.id}, {self.pavadinimas}, {self.klase}'
@@ -46,9 +46,9 @@ class Vietoves(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     pavadinimas = Column(String(50))
     regionai_id = Column(Integer, ForeignKey('regionai.id'))
-    regionai = relationship('Regionai', back_populates='vietoves') #one to many
+    regionai = relationship('Regionai', back_populates='vietoves') 
     grybai_id = Column(Integer, ForeignKey('grybai.id'))
-    grybai = relationship('Grybai', secondary=table_vietoves_grybai, back_populates='vietove') #many to many
+    grybai = relationship('Grybai', secondary=table_vietoves_grybai, back_populates='vietove') 
 
     def __repr__(self):
         return f'{self.pavadinimas}'
