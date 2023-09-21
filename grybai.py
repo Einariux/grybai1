@@ -5,7 +5,6 @@ from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 from sqlalchemy.exc import OperationalError
 
 
-
 try:
     db_engine = create_engine('sqlite:///grybai.db')
     Base = declarative_base()
@@ -23,12 +22,20 @@ class Grybai(Base):
     vietove_id = Column(Integer, ForeignKey('vietoves.id'))
     vietoves = relationship('Vietoves', back_populates='grybai')
 
+    def __repr__(self):
+        return f'{self.id}, {self.pavadinimas}, {self.grybo_klase}'
+    
+
 class Vietoves(Base):
     __tablename__ = 'vietoves'
     id = Column(Integer, primary_key=True, autoincrement=True)
     vietoves_pavadinimas = Column(String(50))
     regionai = relationship('Regionai', back_populates='vietove')
     grybai = relationship('Grybai', back_populates='vietoves')
+
+    def __repr__(self):
+        return f'{self.vietoves_pavadinimas}'
+    
 
 class Regionai(Base):
     __tablename__ = 'regionai'
@@ -37,6 +44,10 @@ class Regionai(Base):
     vietove_reg = Column(Integer, ForeignKey('vietoves.id'))
     vietove = relationship('Vietoves', back_populates='regionai')
 
+    def __repr__(self):
+        return f'{self.regionas}'
+    
+    
 Base.metadata.create_all(db_engine)
 
 
@@ -95,6 +106,17 @@ def remove_location(session):
         event, values = window.read()
         if event == sg.WINDOW_CLOSED:
             break
+        if event == '-ISTRINTI-':
+            pasirinkta_vietove = values['-VIETOVES-']
+            if pasirinkta_vietove:
+                pasirinkta_vietove_pavadinimas = pasirinkta_vietove[0]
+                trinti_vietove = next((vietove for vietove in vietoves if vietove.vietoves == pasirinkta_vietove_pavadinimas), None)
+                session.delete(trinti_vietove)
+                session.comit()
+                sg.popup(f'Vietove {pasirinkta_vietove_pavadinimas} sekmingai istrinta')
+        else:
+            sg.popup('Pasirinkite vietove, kuria norite istrinti')
+
 
 def add_mushroom(): # Vytautas 
     pass
@@ -104,3 +126,4 @@ if __name__ == '__main__':
     session = Session()
     add_location(session)
     remove_location(session)
+    
