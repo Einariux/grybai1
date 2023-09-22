@@ -10,35 +10,98 @@ session = Session()
 
 
 def main_window():  # Einaras
-    pass
+    layout = [
+        [sg.Text("Sveiki atvykę!")],
+        [sg.Button("Pridėti/ ištrinti regioną")],
+        [sg.Button("Peržiūrėti vietas")],
+        [sg.Button("Pridėti vietą")],
+        [sg.Button("Ištrinti vietą")],
+        [sg.Button("Peržiūrėti Grybus")],
+        [sg.Button("Išeiti")],
+    ]
+
+    window = sg.Window("Mushroom App", layout, finalize=True)
+
+    while True:
+        event, values = window.read()
+
+        if event == sg.WIN_CLOSED or event == "Exit":
+            break
+        elif event == "Pridėti/ ištrinti regioną":
+            add_or_remove_region(session)
+        elif event == "Peržiūrėti vietas":
+            view_locations(session)
+        elif event == "Pridėti vietą":
+            add_location(session)
+        elif event == "Ištrinti vietą":
+            remove_location(session)
+        elif event == "Peržiūrėti Grybus":
+            perziureti_grybus(session)
+
+    window.close()
 
 
-def add_region(session):  # Deivida
+def add_or_remove_region(session):  # Deivida
+    regions = session.query(Regionai).all()
+    region_names = [region.pavadinimas for region in regions]
+
     layout = [
         [
-            sg.Text("Įveskite regiono pavadinimą: ", size=20),
+            sg.Text("Pasirinkite veiksmą:", size=(20, 1)),
+            sg.Radio("Pridėti", "RADIO1", key="-ADD-", default=True),
+            sg.Radio("Ištrinti", "RADIO1", key="-REMOVE-"),
+        ],
+        [
+            sg.Text("Regiono pavadinimas: ", size=(20, 1)),
             sg.InputText(key="-REGIONO-PAVADINIMAS-"),
         ],
-        [sg.Button("Pridėti", key="-PRIDETI-")],
+        [
+            sg.Text("Pasirinkite regioną: ", size=(20, 1)),
+            sg.Combo(region_names, key="-REGIONAI-", size=(10, 10)),
+        ],
+        [sg.Button("Vykdyti", key="-VYKDYTI-")],
     ]
-    window = sg.Window("Naujo regiono įvedimas", layout, finalize=True)
+    window = sg.Window("Pridėti arba Ištrinti Regioną", layout, finalize=True)
 
     while True:
         event, values = window.read()
         if event == sg.WINDOW_CLOSED:
             break
-        if event == "-PRIDETI-":
-            regiono_pavadinimas = values["-REGIONO-PAVADINIMAS-"]
-            if regiono_pavadinimas:
-                naujas_regionas = Regionai(pavadinimas=regiono_pavadinimas)
-                session.add(naujas_regionas)
+        if event == "-VYKDYTI-":
+            add_selected = values["-ADD-"]
+            remove_selected = values["-REMOVE-"]
+            region_name = values["-REGIONO-PAVADINIMAS-"]
+            selected_region_name = values["-REGIONAI-"]
+
+        if add_selected:
+            if region_name:
+                new_region = Regionai(pavadinimas=region_name)
+                session.add(new_region)
                 session.commit()
-                sg.popup(f"Regionas: {regiono_pavadinimas} sėkmingai pridėtas")
-                break
+                sg.popup(f"Regionas {region_name} pridėtas sėkmingai")
+                window["-REGIONO-PAVADINIMAS-"].update("")
+                region_names.append(region_name)
+                window["-REGIONAI-"].update(values=region_names)
             else:
                 sg.popup("Regiono pavadinimas negali būti tuščias")
-   
-   
+        elif remove_selected:
+            if selected_region_name:
+                region_to_delete = next(
+                    (
+                        region
+                        for region in regions
+                        if region.pavadinimas == selected_region_name
+                    ),
+                    None,
+                )
+                if region_to_delete:
+                    session.delete(region_to_delete)
+                    session.commit()
+                    sg.popup(f"Regionas {selected_region_name} ištrintas sėkmingai")
+                    region_names.remove(selected_region_name)
+                    window["-REGIONAI-"].update(values=region_names)
+
+
 # Lukas
 def perziureti_grybus(session):
     regions = session.query(Regionai).all()
@@ -214,7 +277,6 @@ def add_mushroom(session):
             else:
                 sg.popup('Vietovė nerasta!')
 
-
 if __name__ == "__main__":
     session = Session()
     add_mushroom(session)
@@ -223,3 +285,4 @@ if __name__ == "__main__":
     remove_location(session)
     view_locations(session)
     perziureti_grybus(session)
+
