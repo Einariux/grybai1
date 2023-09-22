@@ -9,13 +9,75 @@ Session = sessionmaker(db_engine)
 session = Session()
 
 
+def add_or_remove_region(session):
+    regions = session.query(Regionas).all()
+    region_names = [region.pavadinimas for region in regions]
+
+    layout = [
+        [
+            sg.Text("Pasirinkite veiksmą:", size=(20, 1)),
+            sg.Radio("Pridėti", "RADIO1", key="-ADD-", default=True),
+            sg.Radio("Ištrinti", "RADIO1", key="-REMOVE-"),
+        ],
+        [
+            sg.Text("Regiono pavadinimas: ", size=(20, 1)),
+            sg.InputText(key="-REGIONO-PAVADINIMAS-"),
+        ],
+        [
+            sg.Text("Pasirinkite regioną: ", size=(20, 1)),
+            sg.Combo(region_names, key="-REGIONAI-", size=(10, 10)),
+        ],
+        [sg.Button("Vykdyti", key="-VYKDYTI-")],
+    ]
+    window = sg.Window("Pridėti arba Ištrinti Regioną", layout, finalize=True)
+
+    while True:
+        event, values = window.read()
+        if event == sg.WINDOW_CLOSED:
+            break
+        if event == "-VYKDYTI-":
+            add_selected = values["-ADD-"]
+            remove_selected = values["-REMOVE-"]
+            region_name = values["-REGIONO-PAVADINIMAS-"]
+            selected_region_name = values["-REGIONAI-"]
+
+            if add_selected:
+                if region_name:
+                    new_region = Regionas(pavadinimas=region_name)
+                    session.add(new_region)
+                    session.commit()
+                    sg.popup(f"Regionas {region_name} pridėtas sėkmingai")
+                    window["-REGIONO-PAVADINIMAS-"].update("")
+                    regions = session.query(Regionas).all()
+                    region_names = [region.pavadinimas for region in regions]
+                    window["-REGIONAI-"].update(values=region_names)
+                else:
+                    sg.popup("Regiono pavadinimas negali būti tuščias")
+            elif remove_selected:
+                if selected_region_name:
+                    region_to_delete = next(
+                        (
+                            region
+                            for region in regions
+                            if region.pavadinimas == selected_region_name
+                        ),
+                        None,
+                    )
+                    if region_to_delete:
+                        session.delete(region_to_delete)
+                        session.commit()
+                        sg.popup(f"Regionas {selected_region_name} ištrintas sėkmingai")
+                        regions = session.query(Regionas).all()
+                        region_names = [region.pavadinimas for region in regions]
+                        window["-REGIONAI-"].update(values=region_names)
+
 # Lukas
 def add_location(session):
     regionai = session.query(Regionas).all()
 
     layout = [
-        [sg.Text('Pavadinima: ', size=(20, 1)), sg.Input(key='-VIETOVE-')],
-        [sg.Text('Pasirinkite regiona: ', size=(20, 1)), sg.Combo(regionai, key='-REGIONAS-', size=(20, 1))],
+        [sg.Text('Pavadinima: ', size=(15, 1)), sg.Input(key='-VIETOVE-', size=(15, 1))],
+        [sg.Text('Pasirinkite regiona: ', size=(15, 1)), sg.Combo(regionai, key='-REGIONAS-', size=(15, 1))],
         [sg.Button('Ivesti', key='-PRIDETI-')],
     ]
     window = sg.Window('Vietoves pridejimas', layout, finalize=True)
@@ -32,6 +94,8 @@ def add_location(session):
                 session.add(nauja_vietove)
                 session.commit()
                 sg.popup(f'Vietove {values["-VIETOVE-"]} sekmingai prideta')
+                window['-VIETOVE-'].update('')
+                window['-REGIONAS-'].update('')
             else:
                 sg.popup('Pasirinktas regionas nerastas')
 
@@ -42,7 +106,7 @@ def vietoviu_perziura_trynimas(session):
     layout = [
         [sg.Text('Pasirinkite regiona'), sg.Combo([regionas.pavadinimas for regionas in regionai], key='-REGIONAS-', enable_events=True)],
         [sg.Listbox(values=[], key='-VIETOVE-', size=(30, 10), enable_events=True, select_mode=sg.LISTBOX_SELECT_MODE_SINGLE)],
-        [sg.Button('Istrinti', key='-ISTRINTI-')]
+        [sg.Button('Prideti', key='-PRIDETI-'), sg.Button('Istrinti', key='-ISTRINTI-')]
     ]
     window = sg.Window('Vietoviu perziura', layout, finalize=False)
 
@@ -83,13 +147,16 @@ def vietoviu_perziura_trynimas(session):
                             vietoves = [vietove.pavadinimas for vietove in pasirinktas_regionas.vietoves]
                             window['-VIETOVE-'].update(values=vietoves)
                             break
+        elif event == '-PRIDETI-':
+            add_location(session)
+
 
 def grybu_perziura(session):
     regionai = session.query(Regionas).all()
     layout = [
         [sg.Text('Regionas: '), sg.Combo(regionai, key='-REGIONAS-', enable_events=True), sg.Text('Vietove: '), sg.Combo([], key='-VIETOVE-', enable_events=True, size=(15,1))],
         [sg.Listbox(values=[], key='-GRYBAS-', size=(50, 10), enable_events=True, select_mode=sg.LISTBOX_SELECT_MODE_SINGLE)],
-        [sg.Button('Trinti')],
+        [sg.Button('Trinti', key='-TRINTI-'), sg.Button('Grybai', key='-GRYBAI-'), sg.Button('Regionai', key='-REGIONAI-'), sg.Button('Vietoves', key='-VIETOVES-')],
     ]
     window = sg.Window('Grybai', layout, finalize=False)
     while True:
@@ -117,9 +184,25 @@ def grybu_perziura(session):
                     window['-GRYBAS-'].update(values=grybai)
                 else:
                     window['-GRYBAS-'].update(values=[])
+        elif event == 'Trinti':
+            selected_grybas = values['-GRYBAS-']
+            if selected_grybas and pasirinkta:
+                trinti_grybas_pavadinimas = selected_grybas[0]
+            for grybas in pasirinkta.grybai:
+                if grybas.pavadinimas == trinti_grybas_pavadinimas:
+                    session.delete(grybas)
+                    session.commit()
+                    sg.popup(f'Grybas "{trinti_grybas_pavadinimas}" sekmingai istrintas.')
+                    grybai = [grybas.pavadinimas for grybas in pasirinkta.grybai]
+                    window['-GRYBAS-'].update(values=grybai)
+                    break
+    
+        elif event == '-REGIONAI-':
+            add_or_remove_region(session)
+        
+        elif event == '-VIETOVES-':
+            vietoviu_perziura_trynimas(session)
 
 Session = sessionmaker(db_engine)
 session = Session()
 grybu_perziura(session)
-add_location(session)
-vietoviu_perziura_trynimas(session)
