@@ -80,7 +80,7 @@ def add_location(session):
         [sg.Text('Pasirinkite regiona: ', size=(15, 1)), sg.Combo(regionai, key='-REGIONAS-', size=(15, 1))],
         [sg.Button('Ivesti', key='-PRIDETI-')],
     ]
-    window = sg.Window('Vietoves pridejimas', layout, finalize=True)
+    window = sg.Window("Vietoves pridejimas", layout, finalize=True)
 
     while True:
         event, values = window.read()
@@ -88,18 +88,21 @@ def add_location(session):
         if event == sg.WINDOW_CLOSED:
             break
 
-        if event == '-PRIDETI-':
-            if values['-REGIONAS-'] and len(values['-VIETOVE-']) > 2:
-                nauja_vietove = Vietove(pavadinimas=values['-VIETOVE-'], regionas=values['-REGIONAS-'])
+        if event == "-PRIDETI-":
+            if values["-REGIONAS-"] and len(values["-VIETOVE-"]) > 2:
+                nauja_vietove = Vietove(
+                    pavadinimas=values["-VIETOVE-"], regionas=values["-REGIONAS-"]
+                )
                 session.add(nauja_vietove)
                 session.commit()
                 sg.popup(f'Vietove {values["-VIETOVE-"]} sekmingai prideta')
                 window['-VIETOVE-'].update('')
                 window['-REGIONAS-'].update('')
             else:
-                sg.popup('Pasirinktas regionas nerastas')
+                sg.popup("Pasirinktas regionas nerastas")
 
     window.close()
+
 
 def vietoviu_perziura_trynimas(session):
     regionai = session.query(Regionas).all()
@@ -108,30 +111,32 @@ def vietoviu_perziura_trynimas(session):
         [sg.Listbox(values=[], key='-VIETOVE-', size=(30, 10), enable_events=True, select_mode=sg.LISTBOX_SELECT_MODE_SINGLE)],
         [sg.Button('Prideti', key='-PRIDETI-'), sg.Button('Istrinti', key='-ISTRINTI-')]
     ]
-    window = sg.Window('Vietoviu perziura', layout, finalize=False)
+    window = sg.Window("Vietoviu perziura", layout, finalize=False)
 
     while True:
         event, values = window.read()
         if event == sg.WINDOW_CLOSED:
             break
-        elif event == '-REGIONAS-':
-            pasirinkto_regiono_pavadinimas = values['-REGIONAS-']
+        elif event == "-REGIONAS-":
+            pasirinkto_regiono_pavadinimas = values["-REGIONAS-"]
             pasirinktas_regionas = None
             for region in regionai:
                 if region.pavadinimas == pasirinkto_regiono_pavadinimas:
                     pasirinktas_regionas = region
                     break
             if pasirinktas_regionas:
-                vietoves = [vietove.pavadinimas for vietove in pasirinktas_regionas.vietoves]
-                window['-VIETOVE-'].update(values=vietoves)
+                vietoves = [
+                    vietove.pavadinimas for vietove in pasirinktas_regionas.vietoves
+                ]
+                window["-VIETOVE-"].update(values=vietoves)
             else:
-                window['-VIETOVE-'].update(values=[])
+                window["-VIETOVE-"].update(values=[])
 
-        elif event == '-ISTRINTI-' and values['-VIETOVE-']:
-            selected_vietove = values['-VIETOVE-']
+        elif event == "-ISTRINTI-" and values["-VIETOVE-"]:
+            selected_vietove = values["-VIETOVE-"]
             if selected_vietove:
                 trinti_vietove = selected_vietove[0]
-                pasirinkto_regiono_pavadinimas = values['-REGIONAS-']
+                pasirinkto_regiono_pavadinimas = values["-REGIONAS-"]
                 pasirinktas_regionas = None
                 for region in regionai:
                     if region.pavadinimas == pasirinkto_regiono_pavadinimas:
@@ -144,11 +149,15 @@ def vietoviu_perziura_trynimas(session):
                             session.delete(vietove)
                             session.commit()
                             sg.popup(f'Vietove "{trinti_vietove}" sekmingai istrinta.')
-                            vietoves = [vietove.pavadinimas for vietove in pasirinktas_regionas.vietoves]
-                            window['-VIETOVE-'].update(values=vietoves)
+                            vietoves = [
+                                vietove.pavadinimas
+                                for vietove in pasirinktas_regionas.vietoves
+                            ]
+                            window["-VIETOVE-"].update(values=vietoves)
                             break
         elif event == '-PRIDETI-':
             add_location(session)
+
 
 
 def grybu_perziura(session):
@@ -158,21 +167,23 @@ def grybu_perziura(session):
         [sg.Listbox(values=[], key='-GRYBAS-', size=(50, 10), enable_events=True, select_mode=sg.LISTBOX_SELECT_MODE_SINGLE)],
         [sg.Button('Trinti', key='-TRINTI-'), sg.Button('Grybai', key='-GRYBAI-'), sg.Button('Regionai', key='-REGIONAI-'), sg.Button('Vietoves', key='-VIETOVES-')],
     ]
-    window = sg.Window('Grybai', layout, finalize=False)
+    window = sg.Window("Grybai", layout, finalize=False)
     while True:
         event, values = window.read()
         if event == sg.WINDOW_CLOSED:
             break
-        if event == '-REGIONAS-':
-            pasirinktas_regionas = values['-REGIONAS-']
+        if event == "-REGIONAS-":
+            pasirinktas_regionas = values["-REGIONAS-"]
             if pasirinktas_regionas:
-                vietoves = [vietove.pavadinimas for vietove in pasirinktas_regionas.vietoves]
-                window['-VIETOVE-'].update(values=vietoves)
+                vietoves = [
+                    vietove.pavadinimas for vietove in pasirinktas_regionas.vietoves
+                ]
+                window["-VIETOVE-"].update(values=vietoves)
             else:
-                window['-VIETOVE-'].update(values=[])
-        
-        elif event =='-VIETOVE-':
-            pasirinkta_vietove = values['-VIETOVE-']
+                window["-VIETOVE-"].update(values=[])
+
+        elif event == "-VIETOVE-":
+            pasirinkta_vietove = values["-VIETOVE-"]
             if pasirinkta_vietove and pasirinktas_regionas:
                 pasirinkta = None
                 for vietove in pasirinktas_regionas.vietoves:
@@ -181,7 +192,7 @@ def grybu_perziura(session):
                         break
                 if pasirinkta:
                     grybai = [grybas.pavadinimas for grybas in pasirinkta.grybai]
-                    window['-GRYBAS-'].update(values=grybai)
+                    window["-GRYBAS-"].update(values=grybai)
                 else:
                     window['-GRYBAS-'].update(values=[])
         elif event == 'Trinti':
