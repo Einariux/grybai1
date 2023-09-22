@@ -35,7 +35,7 @@ class Grybas(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     pavadinimas = Column(String(50))
     klase = Column(String(50))
-    vietove = relationship('Vietoves', secondary=table_vietoves_grybai, back_populates='grybai') 
+    vietoves = relationship('Vietove', secondary=table_vietoves_grybai, back_populates='grybai') 
     
     def __repr__(self):
         return f'{self.id}, {self.pavadinimas}, {self.klase}'
