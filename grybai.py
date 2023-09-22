@@ -174,12 +174,10 @@ def view_locations(session):
     regionu_pavadinimai = [regionas.pavadinimas for regionas in regions]
 
     layout = [
-        [
-            sg.Text("Pasirinkite regiona: "),
-            sg.Combo(regionu_pavadinimai, key="-REGIONAI-", size=15),
-        ],
-        [sg.Multiline(key="-VIETOVES-", size=(30, 10))],
-        [sg.Button("Uzdaryti", key="-UZDARYTI-")],
+        [sg.Text('Pasirinkite regiona: '), sg.Combo(regionu_pavadinimai, key='-REGIONAI-', size=15)],
+        [sg.Button('Rodyti', key='-RODYTI-')],
+        [sg.Multiline(key='-VIETOVES-', size=(30,10))],
+        [sg.Button('Uzdaryti', key='-UZDARYTI-')],
     ]
     window = sg.Window("Vietoviu perziura", layout, finalize=False)
 
@@ -202,7 +200,21 @@ def view_locations(session):
     else:
         # nerodom vietoviu (multiline) jeigu nepasirinktas regionas
         window["-VIETOVES-"].update("")
+        
+        if event == sg.WINDOW_CLOSED or event == '-UZDARYTI-':
+            break
+        if event == '-RODYTI-':
 
+            pasirinktas_regionas = values['-REGIONAI-']
+            pasirinktas_regionas_objektas = next((region for region in regions if region.pavadinimas == pasirinktas_regionas), None)
+            
+        if pasirinktas_regionas_objektas:
+            visos_vietoves = [vietove.pavadinimas for vietove in pasirinktas_regionas_objektas.vietoves]
+            window['-VIETOVES-'].update('\n'.join(visos_vietoves))
+        else:
+            window['-VIETOVES-'].update('') 
+
+    window.close()
 
 def add_location(session):
     # pasiimti regionus is db
@@ -220,6 +232,9 @@ def add_location(session):
             sg.Combo(regionu_pavadinimai, key="-REGIONAI-"),
         ],
         [sg.Button("Prideti", key="-PRIDETI-")],
+        [sg.Text('Iveskite vietoves pavadinima: ', size=20), sg.InputText(key='-PAVADINIMAS-')],
+        [sg.Text('Pasirinkite regiona: ', size=20), sg.Combo(regionu_pavadinimai, key='-REGIONAI-')],
+        [sg.Button('Prideti', key='-PRIDETI-')],
     ]
     window = sg.Window("Naujos Vietoves Ivedimas", layout, finalize=True)
 
@@ -255,9 +270,33 @@ def add_location(session):
 
 def remove_location(session):
     vietoves = session.query(Vietoves).all()
-    # vietoves dropDown
-    vietove = [vietove.pavadinimas for vietove in vietoves]
+    layout = [
+        [sg.Text('Pasirinkite vietove trynimui: ', size=20)],
+        [sg.Listbox(values=[v.pavadinimas for v in vietoves], size=(15, 8), key='-VISOS-VIETOVES-', enable_events=True, select_mode=sg.LISTBOX_SELECT_MODE_SINGLE)],
+        [sg.Button('Istrinti', key='-ISTRINTI-')],
+    ]
+    window = sg.Window('Vietoves pasalinimas', layout, finalize=False)
 
+    while True:
+        event, values = window.read()
+        if event == sg.WINDOW_CLOSED:
+            break
+        if event == '-ISTRINTI-':
+           pasirinkta_vietove_pavadinimas = values['-VISOS-VIETOVES-'][0]
+           if pasirinkta_vietove_pavadinimas is not None:
+               pasirinkta_vietove = next((v for v in vietoves if v.pavadinimas == pasirinkta_vietove_pavadinimas), None)
+               if pasirinkta_vietove:
+                   session.delete(pasirinkta_vietove)
+                   session.commit()
+                   sg.popup(f'Vietove {pasirinkta_vietove.pavadinimas} sekmingai pasalinta')
+                   vietoves = session.query(Vietoves).all()
+                   window['-VISOS-VIETOVES-'].update(values=[v.pavadinimas for v in vietoves])
+
+def add_mushroom(session):
+    grybai = session.query(Grybai).all()
+    grybu_names = [grybas.pavadinimas for grybas in grybai]
+    vietoves = session.query(Vietoves).all()
+    vietoviu_pavadinimai = [vietove.pavadinimas for vietove in vietoves]
     layout = [
         [
             sg.Text("Pasirinkite vietove: ", size=20),
@@ -274,6 +313,21 @@ def remove_location(session):
         [sg.Button("Istrinti", key="-ISTRINTI-")],
     ]
     window = sg.Window("Vietoves pasalinimas", layout, finalize=False)
+            sg.Text('Įveskite Grybo Pavadinimą: ', size=20),
+            sg.InputText(key='-PAVADINIMAS-'),
+        ],
+        [
+            sg.Text('Įveskite Grybo Klasę: ', size=20),
+            sg.InputText(key='-KLASE-'),
+        ],
+        [
+            sg.Text('Pasirinkite Vietovę: ', size=20),
+            sg.Combo(vietoviu_pavadinimai, key='-VIETOVES-'),
+        ],
+        [sg.Button('Pridėti Grybą', key='-PRIDETI-')],
+    ]
+    window = sg.Window('Naujas Grybas', layout, finalize=True)
+
     while True:
         event, values = window.read()
         if event == sg.WINDOW_CLOSED:
@@ -303,14 +357,28 @@ def remove_location(session):
 
 
 def add_mushroom():  # Vytautas
-    pass
+        if event == '-PRIDETI-':
+            grybo_name = values['-PAVADINIMAS-']
+            grybo_class = values['-KLASE-']
+            grybo_location_name = values['-VIETOVES-']
+            
+            grybo_location = next((vietove for vietove in vietoves if vietove.pavadinimas == grybo_location_name), None)
 
+            if grybo_location:
+                naujas_grybas = Grybai(pavadinimas=grybo_name, klase=grybo_class, vietove=grybo_location)
+                session.add(naujas_grybas)
+                session.commit()
+                sg.popup(f'Grybas: {grybo_name} Sėkmingai Pridėtas')
+                break
+            else:
+                sg.popup('Vietovė nerasta!')
 
 if __name__ == "__main__":
     session = Session()
-    main_window()
-    # add_or_remove_region(session)
-    # add_location(session)
-    # remove_location(session)
-    # view_locations(session)
-    # perziureti_grybus(session)
+    add_mushroom(session)
+    add_region(session)
+    add_location(session)
+    remove_location(session)
+    view_locations(session)
+    perziureti_grybus(session)
+
