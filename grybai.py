@@ -9,7 +9,7 @@ Session = sessionmaker(db_engine)
 session = Session()
 
 
-def main_window():  # Einaras
+def main_window(session):  # Einaras
     layout = [
         [sg.Text("Sveiki atvykę!")],
         [sg.Button("Pridėti/ ištrinti regioną")],
@@ -279,10 +279,11 @@ def add_mushroom(session):
 
 if __name__ == "__main__":
     session = Session()
-    add_mushroom(session)
-    add_region(session)
-    add_location(session)
-    remove_location(session)
-    view_locations(session)
+    main_window(session)
+    # add_mushroom(session)
+    # add_or_remove_region(session)
+    # add_location(session)
+    # remove_location(session)
+    # view_locations(session)
     perziureti_grybus(session)
 

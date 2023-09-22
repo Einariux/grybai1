@@ -17,38 +17,36 @@ Base = declarative_base()
 table_vietoves_grybai = Table(
     'vietoves_grybai',
     Base.metadata,
-    Column('vietoves_id', Integer, ForeignKey('vietoves.id')),
-    Column('grybai_id', Integer, ForeignKey('grybai.id')),
+    Column('vietove_id', Integer, ForeignKey('vietove.id')),
+    Column('grybas_id', Integer, ForeignKey('grybas.id')),
 )
 
-class Regionai(Base):
-    __tablename__ = 'regionai'
+class Regionas(Base):
+    __tablename__ = 'regionas'
     id = Column(Integer, primary_key=True, autoincrement=True)
     pavadinimas = Column(String(50))
-    vietoves = relationship('Vietoves', back_populates='regionai')
+    vietoves = relationship('Vietove', back_populates='regionas')
     
     def __repr__(self):
         return f'{self.pavadinimas}'
 
-class Grybai(Base):
-    __tablename__ = 'grybai'
+class Grybas(Base):
+    __tablename__ = 'grybas'
     id = Column(Integer, primary_key=True, autoincrement=True)
     pavadinimas = Column(String(50))
     klase = Column(String(50))
-    vietove_id = Column(Integer, ForeignKey('vietoves.id'))
     vietove = relationship('Vietoves', secondary=table_vietoves_grybai, back_populates='grybai') 
     
     def __repr__(self):
         return f'{self.id}, {self.pavadinimas}, {self.klase}'
 
-class Vietoves(Base):
-    __tablename__ = 'vietoves'
+class Vietove(Base):
+    __tablename__ = 'vietove'
     id = Column(Integer, primary_key=True, autoincrement=True)
     pavadinimas = Column(String(50))
-    regionai_id = Column(Integer, ForeignKey('regionai.id'))
-    regionai = relationship('Regionai', back_populates='vietoves') 
-    grybai_id = Column(Integer, ForeignKey('grybai.id'))
-    grybai = relationship('Grybai', secondary=table_vietoves_grybai, back_populates='vietove') 
+    regionas_id = Column(Integer, ForeignKey('regionas.id'))
+    regionas = relationship('Regionas', back_populates='vietoves')
+    grybai = relationship('Grybas', secondary=table_vietoves_grybai, back_populates='vietoves') 
 
     def __repr__(self):
         return f'{self.pavadinimas}'
