@@ -243,9 +243,9 @@ def grybo_ivedimas(session):
 def grybu_perziura(session):
     regionai = session.query(Regionas).all()
     layout = [
-        [sg.Text('Regionas: '), sg.Combo(regionai, key='-REGIONAS-', enable_events=True), sg.Text('Vietove: '), sg.Combo([], key='-VIETOVE-', enable_events=True, size=(15,1))],
-        [sg.Listbox(values=[], key='-GRYBAS-', size=(50, 10), enable_events=True, select_mode=sg.LISTBOX_SELECT_MODE_SINGLE)],
-        [sg.Button('Trinti', key='-TRINTI-'), sg.Button('Grybai', key='-GRYBO-IVEDIMAS-'), sg.Button('Regionai', key='-REGIONAI-'), sg.Button('Vietoves', key='-VIETOVES-')],
+        [sg.Text('Regionas: '), sg.Combo(regionai, key='-REGIONAS-', enable_events=True), sg.Text('Vietovė: '), sg.Combo([], key='-VIETOVE-', enable_events=True, size=(15,1))],
+        [sg.Multiline('', key='-GRYBAS-', size=(50, 10))],
+        [sg.Button('Trinti', key='-TRINTI-'), sg.Button('Grybai', key='-GRYBO-IVEDIMAS-'), sg.Button('Regionai', key='-REGIONAI-'), sg.Button('Vietovės', key='-VIETOVES-')],
     ]
     window = sg.Window("Grybai", layout, finalize=False)
     pasirinktas_regionas = None
@@ -257,9 +257,7 @@ def grybu_perziura(session):
         if event == "-REGIONAS-":
             pasirinktas_regionas = values["-REGIONAS-"]
             if pasirinktas_regionas:
-                vietoves = [
-                    vietove.pavadinimas for vietove in pasirinktas_regionas.vietoves
-                ]
+                vietoves = [vietove.pavadinimas for vietove in pasirinktas_regionas.vietoves]
                 window["-VIETOVE-"].update(values=vietoves)
             else:
                 window["-VIETOVE-"].update(values=[])
@@ -273,22 +271,10 @@ def grybu_perziura(session):
                         pasirinkta = vietove
                         break
                 if pasirinkta:
-                    grybai = [grybas.pavadinimas for grybas in pasirinkta.grybai]
-                    window["-GRYBAS-"].update(values=grybai)
+                    grybai_info = [f"{grybas.pavadinimas}: {grybas.klase}" for grybas in pasirinkta.grybai]
+                    window["-GRYBAS-"].update(value='\n'.join(grybai_info))
                 else:
-                    window['-GRYBAS-'].update(values=[])
-        elif event == 'Trinti':
-            selected_grybas = values['-GRYBAS-']
-            if selected_grybas and pasirinkta:
-                trinti_grybas_pavadinimas = selected_grybas[0]
-            for grybas in pasirinkta.grybai:
-                if grybas.pavadinimas == trinti_grybas_pavadinimas:
-                    session.delete(grybas)
-                    session.commit()
-                    sg.popup(f'Grybas "{trinti_grybas_pavadinimas}" sekmingai istrintas.')
-                    grybai = [grybas.pavadinimas for grybas in pasirinkta.grybai]
-                    window['-GRYBAS-'].update(values=grybai)
-                    break
+                    window['-GRYBAS-'].update(value='')
         elif event == '-REGIONAI-':
             add_or_remove_region(session)
         
@@ -297,7 +283,7 @@ def grybu_perziura(session):
         elif event == '-GRYBO-IVEDIMAS-':
             grybo_ivedimas(session)
 
-
-Session = sessionmaker(db_engine)
-session = Session()
-grybu_perziura(session)
+if __name__ == "__main__":
+    Session = sessionmaker(db_engine)
+    session = Session()
+    grybu_perziura(session)
